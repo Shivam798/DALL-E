@@ -17,8 +17,29 @@ const CreatePost = () => {
   const [generatingImg, setGeneratingImg] = useState(false)
   const [loading, setLoading] = useState(false)
   
-  const handleSubmit = () => { 
-
+  const handleSubmit = async(e) => { 
+    e.preventDefault();
+    if(form.prompt && form.photo){
+      setLoading(true);
+      try {
+        const response = await fetch('http://localhost:8081/api/v1/post',{
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json',
+          },
+          body:JSON.stringify(form)
+        })
+        const respost = await response.json();
+        console.log("MY LOG"+respost);
+        navigate('/');
+      } catch (error) {
+        alert(error)
+      }finally{
+        setLoading(false);
+      }
+    }else{
+      alert("Please generate an image first")
+    }
   }
 
   const handleChange =(e) => { 
@@ -36,7 +57,7 @@ const CreatePost = () => {
       try {
         setGeneratingImg(true)
 
-        const response = await fetch('http://localhost:8080/api/v1/dalle', {
+        const response = await fetch('http://localhost:8081/api/v1/dalle', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -48,7 +69,7 @@ const CreatePost = () => {
         })
         
         const data = await response.json();
-        console.log(data);
+        console.log(data.photo);
         setForm({...form,photo:`data:image/jpeg;base64,${data.photo}`})
       } catch (error) {
         alert(error)
