@@ -3,7 +3,7 @@ import {useNavigate} from 'react-router-dom'
 import {preview} from '../assets'
 import {getRandomPrompt} from '../utils'
 import {FormField,Loader} from "../components"
-import axios from 'axios'
+
 
 const CreatePost = () => {
   const navigate = useNavigate();
@@ -70,7 +70,7 @@ const CreatePost = () => {
         
         const data = await response.json();
         console.log(data.photo);
-        setForm({...form,photo:`data:image/jpeg;base64,${data.photo}`})
+        setForm({...form,photo:data.photo})
       } catch (error) {
         alert(error)
         

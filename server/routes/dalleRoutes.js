@@ -1,32 +1,38 @@
 import express from 'express';
 import * as dotenv from 'dotenv';
-import {Configuration,OpenAIApi} from 'openai'
-import Post from '../mongodb/models/post.js'
+import axios from 'axios';
+
 dotenv.config();
 
 const router = express.Router(); 
-const configuration = new Configuration({
-    apiKey:process.env.OPENAI_API_KEY_2,
-})
-
-const openai =  new OpenAIApi(configuration)
+const HUGGING_API_KEY = process.env.HUGGINGFACE_API_TOKEN;
 router.route('/').get((req,res)=>{
     res.send("Hello from DALL-E!!")
 })
 router.route('/').post(async(req,res)=>{
     try {
-        const {prompt} = req.body
-        const aiResponse = await openai.createImage({
-            prompt,
-            n:1,
-            size:"1024x1024",
-            response_format:'b64_json',
-        }) 
-        // console.log(aiResponse.data);
-        const image = aiResponse.data.data[0].b64_json;
-        res.status(200).json({photo:image})
+        const  {prompt}  = req.body;
+        async function query(data) {
+            const response = await axios.post(
+                "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev",
+                data,
+                {
+                    headers: {
+                        Authorization:  `${HUGGING_API_KEY}`, 
+                        "Content-Type": "application/json",
+                    },
+                    responseType: 'arraybuffer', 
+                }
+            );
+            return Buffer.from(response.data, 'binary').toString('base64');
+        }
+        query({ "inputs": prompt }).then(async ( base64Image ) => {
+            res.status(200).json({ photo:  `data:image/jpeg;base64,${base64Image}`});
+        }).catch((error) => {
+            console.error('Error:', error);
+            res.status(500).json({ error: 'Failed to generate image' });
+        });
     } catch (error) {
-        
         res.status(500).send(error.message)
     }
 })
